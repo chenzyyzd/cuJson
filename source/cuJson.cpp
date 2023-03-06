@@ -49,6 +49,24 @@ int cuJson::GetItemInt(const Json &json, const std::string &itemName)
 	return itemInt;
 }
 
+double cuJson::GetItemDouble(const Json &json, const std::string &itemName)
+{
+	if (json >= jsonList.size() || json < 0) {
+		return 0;
+	}
+
+	std::string item = GetNotNestedItem(jsonList[json], itemName);
+	if (!item.empty()) {
+		item = GetRePrevString(GetPostString(item, ':'), ',');
+	} else {
+		return 0;
+	}
+
+	double itemDouble = atof(item.c_str());
+
+	return itemDouble;
+}
+
 bool cuJson::GetItemBool(const Json &json, const std::string &itemName)
 {
 	if (json >= jsonList.size() || json < 0) {
@@ -62,12 +80,10 @@ bool cuJson::GetItemBool(const Json &json, const std::string &itemName)
 		return false;
 	}
 
-	bool itemBool;
+	bool itemBool = false;
 	if (item == "true") {
 		itemBool = true;
-	} else {
-		itemBool = false;
-	}
+	} 
 
 	return itemBool;
 }
@@ -93,21 +109,20 @@ cuJson::Json cuJson::GetItemJson(const Json &json, const std::string &itemName)
 
 std::string cuJson::PrintJson(const Json &json)
 {
-	std::string jsonText = "";
 	if (json >= jsonList.size() || json < 0) {
-		return jsonText;
+		return "";
 	}
 
-	jsonText = jsonList[json];
+	std::string jsonText = jsonList[json];
 
 	return jsonText;
 }
 
 std::string cuJson::FormatString(const std::string &str)
 {
-	char* buffer = (char*)str.c_str();
-
 	std::string fstring = "";
+
+	char* buffer = const_cast<char*>(str.c_str());
 	while (*buffer != '\0') {
 		if (*buffer != ' ' && *buffer != '	' && *buffer != '\r' && *buffer != '\n') {
 			fstring += *buffer;
@@ -120,8 +135,9 @@ std::string cuJson::FormatString(const std::string &str)
 
 std::string cuJson::GetPrevString(const std::string &str, const char &chr)
 {
-	char* buffer = (char*)str.c_str();
+	std::string prevString = str;
 
+	char* buffer = const_cast<char*>(prevString.c_str());
 	int i;
 	for (i = (strlen(buffer) - 1); i >= 0; i--) {
 		char* buffer_ptr = buffer + i;
@@ -130,15 +146,16 @@ std::string cuJson::GetPrevString(const std::string &str, const char &chr)
 			break;
 		}
 	}
-
-	std::string prevString = buffer;
+	prevString = buffer;
 
 	return prevString;
 }
 
 std::string cuJson::GetPostString(const std::string &str, const char &chr)
 {
-	char* buffer = (char*)str.c_str();
+	std::string postString = str;
+
+	char* buffer = const_cast<char*>(postString.c_str());
 	while (*buffer != '\0') {
 		if (*buffer == chr) {
 			buffer++;
@@ -146,15 +163,16 @@ std::string cuJson::GetPostString(const std::string &str, const char &chr)
 		}
 		buffer++;
 	}
-
-	std::string postString = buffer;
+	postString = buffer;
 
 	return postString;
 }
 
 std::string cuJson::GetRePrevString(const std::string &str, const char &chr)
 {
-	char* buffer = (char*)str.c_str();
+	std::string prevString = str;
+
+	char* buffer = const_cast<char*>(prevString.c_str());
 	int i;
 	for (i = 0; i < strlen(buffer); i++) {
 		char* buffer_ptr = buffer + i;
@@ -163,17 +181,16 @@ std::string cuJson::GetRePrevString(const std::string &str, const char &chr)
 			break;
 		}
 	}
-
-	std::string prevString = buffer;
+	prevString = buffer;
 
 	return prevString;
 }
 
 std::string cuJson::GetSingleJson(const std::string &str)
 {
-	char* buffer = (char*)str.c_str();
-
 	std::string jsonText = "";
+
+	char* buffer = const_cast<char*>(str.c_str());
 	int braceNum = 0;
 	while (*buffer != '\0') {
 		jsonText += *buffer;
@@ -193,9 +210,7 @@ std::string cuJson::GetSingleJson(const std::string &str)
 
 bool cuJson::IsInNestJson(const std::string &str)
 {
-	bool inNestJson = false;
-
-	char* buffer = (char*)str.c_str();
+	char* buffer = const_cast<char*>(str.c_str());
 	int braceNum = 0;
 	while (*buffer != '\0') {
 		if (*buffer == '{') {
@@ -206,6 +221,7 @@ bool cuJson::IsInNestJson(const std::string &str)
 		buffer++;
 	}
 
+	bool inNestJson = false;
 	if (braceNum < 0) {
 		inNestJson = true;
 	}
@@ -215,25 +231,25 @@ bool cuJson::IsInNestJson(const std::string &str)
 
 std::string cuJson::GetNotNestedItem(const std::string &str, const std::string &itemName)
 {
-	std::string itemText = GetPrevString(GetPostString(str, '{'), '}');
+	std::string item = GetPrevString(GetPostString(str, '{'), '}');
 
 	char itemNameBuf[128];
 	sprintf(itemNameBuf, "\"%s\"", itemName.c_str());
-	char* item_ptr = (char*)itemText.c_str();
-	int inNestJson = 1;
-	while (inNestJson) {
-		const char* new_item_ptr = strstr(item_ptr, itemNameBuf);
+	char* item_ptr = const_cast<char*>(item.c_str());
+	bool inNestJson = true;
+	while (inNestJson == true) {
+		char* new_item_ptr = strstr(item_ptr, itemNameBuf);
 		if (new_item_ptr == NULL) {
 			return "";
 		} else if (new_item_ptr != item_ptr) {
-			itemText = new_item_ptr;
-			item_ptr = (char*)new_item_ptr + strlen(itemNameBuf);
+			item = new_item_ptr;
+			item_ptr = new_item_ptr + strlen(itemNameBuf);
 		} else {
-			itemText = new_item_ptr;
+			item = new_item_ptr;
 			break;
 		}
-		inNestJson = (int)IsInNestJson(itemText);
+		inNestJson = IsInNestJson(item);
 	}
 
-	return itemText;
+	return item;
 }

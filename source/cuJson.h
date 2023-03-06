@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdio.h>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -17,6 +17,7 @@ class cuJson
 		Json ParseJson(const std::string &text);
 		std::string GetItemString(const Json &json, const std::string &itemName);
 		int GetItemInt(const Json &json, const std::string &itemName);
+		double GetItemDouble(const Json &json, const std::string &itemName);
 		bool GetItemBool(const Json &json, const std::string &itemName);
 		Json GetItemJson(const Json &json, const std::string &itemName);
 		std::string PrintJson(const Json &json);
